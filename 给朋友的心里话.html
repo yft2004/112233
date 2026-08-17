@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>一封信</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --line: #d7dade;
+      --ink: #2f3338;
+      --corner: #cfd3d8;
+    }
+
+    body {
+      font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "Heiti SC", sans-serif;
+      background: #f4f5f6;
+      color: var(--ink);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ===== 右上角音乐开关 ===== */
+    body.opened #muteBtn {
+      display: block;
+    }
+
+    #muteBtn {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 20;
+      display: none;
+      width: 42px;
+      height: 42px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .85);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    /* ===== 封面：信封 ===== */
+    #cover {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      background: #f4f5f6;
+      cursor: pointer;
+      transition: opacity .6s ease;
+    }
+
+    body.opened #cover {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .env {
+      width: min(74vw, 320px);
+      aspect-ratio: 320/214;
+      position: relative;
+      perspective: 1100px;
+      animation: float 3.6s ease-in-out infinite;
+      filter: drop-shadow(0 18px 38px rgba(0, 0, 0, .13));
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(-10px)
+      }
+    }
+
+    .env-body {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .env-flap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 54.2%;
+      transform-origin: top center;
+      transform: rotateX(0deg);
+      transition: transform .8s cubic-bezier(.4, .1, .2, 1);
+    }
+
+    .env-flap svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    body.opened .env-flap {
+      transform: rotateX(-166deg);
+    }
+
+    .env-seal {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 15px;
+      height: 15px;
+      background: radial-gradient(circle at 35% 30%, #d3d8dd, #aeb4ba);
+      border-radius: 50%;
+      transform: translate(-50%, 50%);
+      transition: opacity .35s ease .25s;
+    }
+
+    body.opened .env-seal {
+      opacity: 0;
+    }
+
+    .cover-text {
+      text-align: center;
+    }
+
+    .cover-text .t1 {
+      font-size: 18px;
+      letter-spacing: 5px;
+      color: #5b6168;
+      font-weight: 600;
+    }
+
+    .cover-text .t2 {
+      font-size: 13px;
+      color: #9aa0a6;
+      margin-top: 9px;
+      letter-spacing: 3px;
+    }
+
+    .tap-hint {
+      font-size: 12px;
+      color: #b3b8bd;
+      margin-top: 5px;
+      animation: blink 1.8s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: .4
+      }
+
+      50% {
+        opacity: 1
+      }
+    }
+
+    /* ===== 信内容 ===== */
+    #letter {
+      max-width: 700px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #e8e9eb;
+      border-radius: 14px;
+      padding: 50px 48px 46px;
+      position: relative;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .06);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(22px);
+    }
+
+    body.opened #letter {
+      visibility: visible;
+      animation: rise 1s cubic-bezier(.2, .7, .3, 1) .15s forwards;
+    }
+
+    @keyframes rise {
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    #letter p {
+      font-size: 16.5px;
+      line-height: 2.1;
+      margin: 16px 0;
+      text-align: justify;
+      text-indent: 2em;
+      opacity: 0;
+    }
+
+    body.opened #letter p {
+      animation: fade .8s ease forwards;
+    }
+
+    @keyframes fade {
+      to {
+        opacity: 1
+      }
+    }
+
+    /* 边角细线装饰 */
+    .corner {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      pointer-events: none;
+    }
+
+    .corner svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .corner.tl {
+      top: 12px;
+      left: 12px;
+    }
+
+    .corner.tr {
+      top: 12px;
+      right: 12px;
+      transform: rotate(90deg);
+    }
+
+    .corner.br {
+      bottom: 12px;
+      right: 12px;
+      transform: rotate(180deg);
+    }
+
+    .corner.bl {
+      bottom: 12px;
+      left: 12px;
+      transform: rotate(270deg);
+    }
+
+    .page-wrap {
+      padding: 56px 16px 90px;
+    }
+
+    @media (max-width:600px) {
+      #letter {
+        padding: 38px 22px 34px;
+        border-radius: 12px;
+      }
+
+      #letter p {
+        font-size: 16px;
+        line-height: 2;
+      }
+
+      .corner {
+        width: 24px;
+        height: 24px;
+      }
+
+      .corner.tl {
+        top: 9px;
+        left: 9px;
+      }
+
+      .corner.tr {
+        top: 9px;
+        right: 9px;
+      }
+
+      .corner.br {
+        bottom: 9px;
+        right: 9px;
+      }
+
+      .corner.bl {
+        bottom: 9px;
+        left: 9px;
+      }
+
+      .page-wrap {
+        padding: 40px 12px 70px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- 右上角音乐开关 -->
+  <button id="muteBtn" aria-label="background music">🔊</button>
+
+  <!-- 背景音乐（与 html 放在同一文件夹） -->
+  <audio id="bgm" src="bgm.m4a" loop preload="auto"></audio>
+
+  <!-- 封面 -->
+  <div id="cover" aria-label="点击开启信件">
+    <div class="env">
+      <!-- 信封主体 + 折痕 -->
+      <svg class="env-body" viewBox="0 0 320 214" preserveAspectRatio="none">
+        <rect x="6" y="6" width="308" height="202" rx="16" fill="#ffffff" stroke="#d7dade" stroke-width="2.5" />
+        <path d="M160 116 L6 208 M160 116 L314 208" stroke="#d7dade" stroke-width="2.5" fill="none"
+          stroke-linecap="round" />
+        <path d="M6 6 L160 116 L314 6" fill="none" stroke="#e3e6ea" stroke-width="2" />
+      </svg>
+      <!-- 翻盖 -->
+      <div class="env-flap">
+        <svg viewBox="0 0 320 120" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="flapGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#ffffff" />
+              <stop offset="1" stop-color="#f3f5f7" />
+            </linearGradient>
+          </defs>
+          <path d="M6 6 L314 6 L160 114 Z" fill="url(#flapGrad)" stroke="#d7dade" stroke-width="2.5"
+            stroke-linejoin="round" />
+          <circle cx="160" cy="114" r="7.5" fill="url(#sealGrad)" />
+          <radialGradient id="sealGrad" cx="35%" cy="30%" r="75%">
+            <stop offset="0" stop-color="#d3d8dd" />
+            <stop offset="1" stop-color="#aeb4ba" />
+          </radialGradient>
+        </svg>
+      </div>
+    </div>
+    <div class="cover-text">
+      <div class="t1">一 封 信</div>
+      <div class="t2">写 给 你</div>
+      <div class="tap-hint">轻触开启</div>
+    </div>
+  </div>
+
+  <!-- 信内容 -->
+  <div class="page-wrap">
+    <div id="letter">
+      <span class="corner tl"><svg viewBox="0 0 30 30" fill="none" stroke="#cfd3d8" stroke-width="1.4"
+          stroke-linecap="round">
+          <path d="M2 13 V2 H13" />
+          <path d="M2 13 q0 -5 5 -5" />
+          <circle cx="2" cy="2" r="1.5" fill="#cfd3d8" stroke="none" />
+        </svg></span>
+      <span class="corner tr"><svg viewBox="0 0 30 30" fill="none" stroke="#cfd3d8" stroke-width="1.4"
+          stroke-linecap="round">
+          <path d="M2 13 V2 H13" />
+          <path d="M2 13 q0 -5 5 -5" />
+          <circle cx="2" cy="2" r="1.5" fill="#cfd3d8" stroke="none" />
+        </svg></span>
+      <span class="corner br"><svg viewBox="0 0 30 30" fill="none" stroke="#cfd3d8" stroke-width="1.4"
+          stroke-linecap="round">
+          <path d="M2 13 V2 H13" />
+          <path d="M2 13 q0 -5 5 -5" />
+          <circle cx="2" cy="2" r="1.5" fill="#cfd3d8" stroke="none" />
+        </svg></span>
+      <span class="corner bl"><svg viewBox="0 0 30 30" fill="none" stroke="#cfd3d8" stroke-width="1.4"
+          stroke-linecap="round">
+          <path d="M2 13 V2 H13" />
+          <path d="M2 13 q0 -5 5 -5" />
+          <circle cx="2" cy="2" r="1.5" fill="#cfd3d8" stroke="none" />
+        </svg></span>
+
+      <p>这两天我静下来想了挺多，想跟你认真说几句心里话，不是矫情，是真的觉得该跟你坦诚聊聊。</p>
+
+      <p>
+        先说最该说的。回头看我们之前的相处，我得承认，我太腻歪了，没给足你边界感——太依赖、太黏，有些亲密和索取其实已经越过了朋友该有的线；你没推开我，其实已经很有耐心了。我现在明白了，好的关系不是谁黏着谁，而是彼此都自在；我连开玩笑都常常没个分寸，，转头又容易因为一点小小事上头，把情绪的重量往你那边放。如果这让你不舒服过，我先说声抱歉，这真的对不住你一直以来的耐心。以后我会把那条线守好，，同时也不能情感绑架别人，学会自己消化情绪，学会如何成长、不再让别人替我兜着。
+      </p>
+
+      <p>
+        还有一点我得认：那阵子我把自己的时间和精力全搁你身上了，自己该想的事、该走的路反而荒着。我不是个没目标的人，却把重心错放成了"围着你怎么转"。这既没尊重你，也没尊重我自己。之前我太依赖、太没分寸，无形中占用了你不少时间和精力，也耽误了你。其实你本不用为我这些情绪反复地费心。现在我是真懂了"先爱己，再爱人"——把自己过好、安顿住，才是对一段关系最大的尊重。所以我不会再拿"靠近"当借口黏着你，也不会让我的迷茫变成你的负担。我们都该朝各自的目标走，而不是互相绊着。谢谢你之前一直没跟我计较。
+      </p>
+
+      <p>
+        说到我自己，也该更像个能扛事的男人了。遇到事不缩、不退，胆子大一点，心态稳一点。以前我做事容易冲动，我现在想的不是"后悔做过什么"，而是"当时为什么会被情绪带着走"。我也太冲动了。好多事没过脑子就做、没掂量就开口，回头看挺幼稚的。我现在想的不是后悔做过什么，而是得把这套急脾气改掉，练出点平稳——不被害怕和急躁推着走，按自己的节奏往前。
+      </p>
+
+      <p>说到底，我最该跟你道歉的是：我违背了当初出现在你身边的初衷。那时候是想跟你相互学习、一起变好，结果我自己跑偏了，把"共同进步"活成了对你的单向消耗。你本该是我的同行者，不该是我的情绪垃圾桶。</p>
+
+      <p>
+        正好这段时间我也在好好学习，我现在也有了自己的目标和规划，准备开学考一个计算机软件考试的中级工程师。同时开始认真学习一些技能，我现在也学会了两项新的技能，也是每天都有所进步的。如怎么让ai替我工作、如这封信，我最初给你的那版还得你自己去解压，而如今我现在也试着把时间花在学习上提升自我，现在你只需点击这个我的网址你就可以访问。我发现自己欠缺的太多了——这两天翻了本《所谓会说话就是懂心理》，越看越觉得，之前你那些提醒、该怎么与人进行相处、那些做人的分寸，我都没真正听进去，挺辜负你一番心的，对不起。但起码，我现在愿意学，也愿意改，现在的我。
+      </p>
+
+      <p>
+        真的很谢谢你，在我一次次犯傻、冲动、越界的时候，还愿意陪着我、点我、拉我一把。我该虚心接受大家对我的批评，虚心学习，不能盲目自大，你教给我的那些，我当时未必都接住了，但都记在心里。以后我会更虚心地听，不再固执己见、自以为是。你要相信我，我会的东西超级多，我脑子特别好用，我做的ppt超级好看，我还有很多很多会的技能，将来我可以帮你处理超级多计算机相关的文件，我将来一定可以帮到你的，因此！我想毛遂自荐一下，希望你给我一个改过自新的机会，我想重新向你介绍一下我自己，然后成为你的朋友。
+      </p>
+
+      <p>如果可以的话，我想跟你重新认识一次。将来的我跟曾经的我会不一样——我会把边界守好，把自己安顿好，做一个阳光开朗的人，改善自己的一个性格，变得优秀起来。咱们回到互相学习、共同进步的那个初衷上，好吗？不忘初心，一起往前走。
+      </p>
+      <img src="1.png" width="500" height="250" alt="敲代码" </div>
+      <img src="3.jpg" width="500" height="250" alt="看书" </div>
+      <img src="2.jpg" width="500" height="250" alt="看书" </div>
+      <img src="4.png" width="500" height="250" alt="做笔记" </div>
+    </div>
+
+    <script>
+      const cover = document.getElementById('cover');
+      const bgm = document.getElementById('bgm');
+      const mb = document.getElementById('muteBtn');
+      const ps = document.querySelectorAll('#letter p');
+      ps.forEach((p, i) => { p.style.animationDelay = (0.5 + i * 0.22) + 's'; });
+
+      cover.addEventListener('click', () => {
+        document.body.classList.add('opened');
+        if (bgm) { bgm.volume = 0.55; bgm.play().catch(function () { }); }
+      });
+
+      if (mb) {
+        mb.addEventListener('click', function () {
+          if (!bgm) return;
+          bgm.muted = !bgm.muted;
+          mb.textContent = bgm.muted ? '🔇' : '🔊';
+        });
+      }
+    </script>
+</body>
+
+</html>
